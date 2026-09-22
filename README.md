@@ -12,3 +12,28 @@ ssh-add ~/.ssh/id_ed25519    (agregar contraseña a la llave solo esta vez (por 
 ESTO SE LIMITA A LA TERMINAL EN LA QUE SE REALIZÓ ESTO, SE PUEDE AUTOMATIZAR? SI, PERO ME DA LA LATA HACER ESO.
 
 git init    en terminal en una carpeta para vincularlo al respositorio
+
+git branch -M main
+git remote add origin git@github.com:VicenteMuhr/Sistemas-Operativos-SO-.git
+
+git add planificador.h planificador.c
+git commit -m "algo"
+git push -u origin main
+
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name" 
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+ssh -T git@github.com
+
+cat ~/.ssh/id_ed25519.pub
+RESULTADO DEL CAT copiar y pegar en add new en los settings ssh del perfil de github.
+
+git pull origin main --rebase      y de ahí hacer el push, porq a veces no deja si tiene un readme o similar en el repositorio de base.
+
+git push -u origin main
+
+
+sudo systemctl restart NetworkManager      por si la vm de kali anda chingando, algo funcionó
