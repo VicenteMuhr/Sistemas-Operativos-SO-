@@ -10,3 +10,5 @@ ssh-keygen -p -f ~/.ssh/id_ed25519 (para cambiar sin contraseña y poner una)
 eval "$(ssh-agent -s)"     (para iniciar la ssh-agent en la sesión actual, admin de llaves en 2do plano)
 ssh-add ~/.ssh/id_ed25519    (agregar contraseña a la llave solo esta vez (por esta sesión))
 ESTO SE LIMITA A LA TERMINAL EN LA QUE SE REALIZÓ ESTO, SE PUEDE AUTOMATIZAR? SI, PERO ME DA LA LATA HACER ESO.
+
+git init    en terminal en una carpeta para vincularlo al respositorio
