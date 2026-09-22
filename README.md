@@ -1,7 +1,7 @@
 # Sistemas-Operativos-SO-
 Todo lo relacionado con lo visto o requerido para el ramo de sistemas operativos (En la UDP)
 
-Para referncia mía de setear el repositorio de manera conveniente (no hace falta leer esto):
+Para referencia mía de setear el repositorio de manera conveniente (no hace falta leer esto):
 ssh-keygen -t ed25519 -C "correo@algo.com"        (enter para ruta predeterminada)
 enter para proseguir sin contraseña
 PARA ssh-agent (mejor práctica)
