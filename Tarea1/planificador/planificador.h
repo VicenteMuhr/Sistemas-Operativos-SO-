@@ -30,14 +30,15 @@ typedef struct{
 	int in_degree; //cant depend no resueltas aun
 	int num_dependencias;
 	//lista nodos (hijos)
-	int *hijos_indices //arr indice hijos
+	int *hijos_indices; //arr indice hijos
 	int num_hijos;
+	int capacidad_hijos; //controla tamaño memoria asignada a hijos_indices
 	//control procs y comunicacion
 	pid_t pid;
 	EstadoActividad estado;
 
 	//pipe
-	int pipe_fd[2]  // 0=lecture, 1=escritura
+	int pipe_fd[2];  // 0=lecture, 1=escritura
 }Actividad;
 //para almacenar el grafo
 typedef struct{
@@ -46,6 +47,10 @@ typedef struct{
 	int capacidad; //capacidad arr
 }Planificador;
 //func tiempo aleatorio si no viene dado (100-5000ms)
-int obtener_tiempo_aleatorio(void)
+int obtener_tiempo_aleatorio(void);
 
-#endif //planificador_h
+Planificador* crear_planificador(int capacidad_inicial);
+int cargar_planificador(Planificador *plan, const char *ruta_archivo);
+void liberar_planificador(Planificador *plan);
+
+#endif //PLANIFICADOR_H

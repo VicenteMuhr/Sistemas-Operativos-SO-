@@ -1,0 +1,11 @@
+#Cada línea es a modo Actividad
+#Separador principal es el :
+#A1 y A2 lista dependencias vacía su in_degree será 0
+#pueden ejecutarse de inmediato
+#A4 depende de A1 y A3, en lectura a1 y a3 tienen que
+#registrar a A4 dentro de los respectivos arreglos
+#hijos_indices
+A1 : Prender carbon : 500 : []
+A2 : Comprar carne : 1000 : []
+A3 : Adobar carne : 300 : [A2]
+A4 : Tirar carne a la parrilla : 2000 : [A1, A3]
