@@ -1,5 +1,6 @@
 #ifndef PLANIFICADOR_H
 #define PLANIFICADOR_H
+#define _DEFAULT_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,9 +49,11 @@ typedef struct{
 }Planificador;
 //func tiempo aleatorio si no viene dado (100-5000ms)
 int obtener_tiempo_aleatorio(void);
-
+// Reserva la memoria inicial para el planificador
 Planificador* crear_planificador(int capacidad_inicial);
+// Lee el archivo de texto y arma el grafo (Estructura base)
 int cargar_planificador(Planificador *plan, const char *ruta_archivo);
+// Libera toda la memoria dinámica solicitada
 void liberar_planificador(Planificador *plan);
 
 #endif //PLANIFICADOR_H
