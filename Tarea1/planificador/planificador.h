@@ -17,8 +17,9 @@ typedef enum{
 	ESTADO_PENDIENTE,
 	ESTADO_EN_EJECUCION,
 	ESTADO_FINALIZADA,
-	ESTADO_FALLIDA
-} EstadoActividad;
+	ESTADO_FALLIDA,
+	ESTADO_CANCELADO
+}EstadoActividad;
 
 //Nodo(actividad) del grafo DAG
 
@@ -55,5 +56,8 @@ Planificador* crear_planificador(int capacidad_inicial);
 int cargar_planificador(Planificador *plan, const char *ruta_archivo);
 // Libera toda la memoria dinámica solicitada
 void liberar_planificador(Planificador *plan);
+//para ejecutar procs
+int buscar_actividad_por_id(Planificador *plan, const char *id);
+void ejecutar_planificador(Planificador *plan, int max_concurrencia_k);
 
 #endif //PLANIFICADOR_H

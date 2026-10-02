@@ -1,7 +1,23 @@
 #include <stdio.h>
 #include "planificador.h"
+#include <stdlib.h> //para atoi()
+#include <time.h> //para time()
+int main(int argc, char *argv[]){
 
-int main(void){
+	//validar q pasa el archivo y K por consola
+	if(argc < 3){
+		fprintf(stderr, "Uso: %s <archivo_plan.txt> <concurrencia_K\n",argv[0]);
+		return 1;
+	}
+	const char *ruta_archivo=argv[1];
+	int max_k=atoi(argv[2]);
+
+	if(max_k <=0){
+		fprintf(stderr, "error: K debe ser mayor a 0 \n");
+		return 1;
+	}
+	//iniciar semilla pa tiempos aleatorios
+	srand(time(NULL));
 
 	// inicializar planificador con capacidad inicial (ej. 10)
 	Planificador *plan = crear_planificador(10);
@@ -11,7 +27,7 @@ int main(void){
 	}
 	//cargar actividades desde el archivo
 	printf("cargando actividades\n");
-	if(cargar_planificador(plan, "plan.txt")!=0){
+	if(cargar_planificador(plan, ruta_archivo)!=0){
 		fprintf(stderr, "error al cargar archivo\n");
 		liberar_planificador(plan);
 		return 1;
@@ -32,6 +48,8 @@ int main(void){
 			}
 		}
 	}
+	ejecutar_planificador(plan, max_k); //ejec procesos con lím K)
+
 	//liberar toda la memoria usada
 	liberar_planificador(plan);
 	printf("\n Memoria liberada, programa terminado \n");
