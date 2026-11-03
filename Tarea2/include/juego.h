@@ -22,7 +22,7 @@ typedef struct{
 }Posicion;
 
 //iniciar juego, movimientos, mostrar tablero
-int val_mov(PartidaKomikan *partida, int tipo_fecha, Posicion origen, Posicion destino); //valida mov legal por regla
+int val_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posicion destino); //valida mov legal por regla
 void iniciar_juego(PartidaKomikan *partida); // inicia estado de partida y tablero
 void imprimir_tablero(PartidaKomikan *partida); //imprime estado actual tablero
 
