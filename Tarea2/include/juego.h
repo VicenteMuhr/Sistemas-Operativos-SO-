@@ -27,4 +27,13 @@ void iniciar_juego(PartidaKomikan *partida); // inicia estado de partida y table
 void imprimir_tablero(PartidaKomikan *partida); //imprime estado actual tablero
 
 void kill_game(PartidaKomikan *partida);
+
+//argumento a hilos de fichas
+typedef struct{
+	PartidaKomikan *partida; //Puntero a partida Komikan
+	int tipo_ficha; //tipo ficha, puma o perro
+	Posicion pos_actual; //posicion actual de ficha
+}ArgHiloFicha;
+void* rutina_ficha(void *arg);
+int puma_acorralado(PartidaKomikan *partida, Posicion pos_puma);
 #endif //JUEGO_H

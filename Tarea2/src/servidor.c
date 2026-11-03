@@ -8,6 +8,7 @@
 #include <semaphore.h>
 #include <stdatomic.h>
 #include "servidor.h"
+#include "juego.h"
 #define DURACION_PARTIDA_MS 2000
 #define INTERVALO_MS 100
 
@@ -120,12 +121,74 @@ static void *ejecutar_juez(void *arg){
 		pareja->jugador_puma,
 		pareja->jugador_perros,
 		mesa + 1);
-	//sim temp: reemplazar por juego real
-	int transcurrido=0;
-	while(transcurrido<DURACION_PARTIDA_MS && !servidor_detenido()){
-		dormir_ms(INTERVALO_MS);
-		transcurrido+=INTERVALO_MS;
+	//juego real ahora >:)
+	PartidaKomikan partida_actual;
+	iniciar_juego(&partida_actual);
+	pthread_t hilos_fichas[13];//1 puma + 12 perros
+	int hilos_creados = 0;
+	//crear thread de puma (inicia en 2,2)
+	ArgHiloFicha *arg_puma = malloc(sizeof(ArgHiloFicha));
+	arg_puma->partida = &partida_actual;
+	arg_puma->tipo_ficha = PUMA;
+	arg_puma->pos_actual = (Posicion){2, 2};
+	pthread_create(&hilos_fichas[hilos_creados++], NULL, rutina_ficha, arg_puma);
+	//crear threads de 12 perros, 2 primeras filas
+	for(int i=0; i<2;i++){
+		for(int j=0; j<5;j++){
+			if(hilos_creados<13){
+				ArgHiloFicha *arg_perro = malloc(sizeof(ArgHiloFicha));
+				arg_perro->partida = &partida_actual;
+				arg_perro->tipo_ficha = PERRO;
+				arg_perro->pos_actual = (Posicion){i, j};
+				pthread_create(&hilos_fichas[hilos_creados++], NULL, rutina_ficha, arg_perro);
+			}
+		}
 	}
+	//juez espera que juego termine o servidor se detenga
+        //imprime log periodicamente
+        while(!partida_actual.juego_end && !servidor_detenido()){
+                imprimir_tablero(&partida_actual);
+                dormir_ms(500);//juez toma foto de tablero cada 500ms
+
+                pthread_mutex_lock(&partida_actual.mutex_tablero);
+                //evaluar si el Puma gano por capturas
+                if (partida_actual.perros_capturados >= 6) {
+                        printf("El Puma capturo a 6 perros, el puma gana. \n");
+                        partida_actual.juego_end = 1;
+                } 
+                //evaluar si los Perros acorralaron al Puma
+                else {
+                        //busca donde puma en tablero
+                        Posicion pos_puma= {-1, -1};
+                        for(int i=0; i<6; i++){
+                                for(int j=0; j<5; j++){
+                                        if(partida_actual.tablero[i][j] == PUMA){
+                                                pos_puma = (Posicion){i,j};
+                                                break;
+                                        }
+                                }
+                        }
+                        if(pos_puma.x != -1 && puma_acorralado(&partida_actual, pos_puma)){
+                                printf("Los perros acorralaron al puma, perros ganan. \n");
+                                partida_actual.juego_end = 1;
+                        }
+                }
+                pthread_mutex_unlock(&partida_actual.mutex_tablero);
+        }
+	imprimir_tablero(&partida_actual);//imprimir tablero final.
+	//forzar fin si ctrl c
+	pthread_mutex_lock(&partida_actual.mutex_tablero);
+	partida_actual.juego_end = 1; 
+	pthread_mutex_unlock(&partida_actual.mutex_tablero);
+	//esperar que fichas terminen y limpiar
+	for(int i=0; i<hilos_creados; i++){
+		pthread_join(hilos_fichas[i], NULL);
+	}
+	if(partida_actual.perros_capturados >= 6){
+		printf("Puma capturo a los 6 perros, puma gana \n");
+	}
+	kill_game(&partida_actual);
+	//termina game real
 	if(servidor_detenido()){
 		printf("Partida %d interrumpida \n", pareja->id);
 	}else{
