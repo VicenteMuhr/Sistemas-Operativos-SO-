@@ -40,15 +40,15 @@ typedef struct{
 	pthread_t *jueces;
 	int *juez_creado;
 }Cliente;
-//consulta si debe detener server
+
 static int servidor_detenido(void){
 	return sigint_recibida||atomic_load(&error_servidor);
 }
-static void manejar_sigint(int signo){ //pal ctrl c
+static void manejar_sigint(int signo){
 	(void)signo;
 	sigint_recibida=1;
 }
-static void dormir_ms(long ms){ //dormir cant de miliseg
+static void dormir_ms(long ms){
 	struct timespec tiempo ={
 		.tv_sec=ms/1000,
 		.tv_nsec= (ms%1000)*1000000L
@@ -57,7 +57,6 @@ static void dormir_ms(long ms){ //dormir cant de miliseg
 		errno == EINTR && !servidor_detenido()){
 	}
 }
-//obtiene lim de espera 100ms
 static int tiempo_limite(struct timespec *limite){
 	if(clock_gettime(CLOCK_REALTIME, limite)==-1) return -1;
 
@@ -68,7 +67,6 @@ static int tiempo_limite(struct timespec *limite){
 	}
 	return 0;
 }
-//esperar mesa disponible
 static int esperar_mesa(void){
 	while(!servidor_detenido()){
 		struct timespec limite;
@@ -78,7 +76,6 @@ static int esperar_mesa(void){
 	}
 	return -1;
 }
-//reservar mesa fisica
 static int reservar_mesa(void){
 	int mesa=-1;
 	pthread_mutex_lock(&mutex_mesas);
@@ -92,14 +89,13 @@ static int reservar_mesa(void){
 	pthread_mutex_unlock(&mutex_mesas);
 	return mesa;
 }
-//liberar mesa y devolver permiso
 static void liberar_mesa(int mesa){
 	pthread_mutex_lock(&mutex_mesas);
 	mesas_ocupadas[mesa]=0;
 	pthread_mutex_unlock(&mutex_mesas);
 	sem_post(&mesas_disponibles);
 }
-//Hilo juez, simula partida for now
+
 static void *ejecutar_juez(void *arg){
 	Pareja *pareja= (Pareja *)arg;
 	if(esperar_mesa()!=0){
@@ -122,25 +118,24 @@ static void *ejecutar_juez(void *arg){
 		return NULL;
 	}
 	pthread_mutex_lock(&mutex_consola);
-	printf("Partida %d: Puma %d vs Perros %d "
-		"-> Mesa %d\n",
+	printf("Partida %d: Puma %d vs Perros %d -> Mesa %d\n",
 		pareja->id,
 		pareja->jugador_puma,
 		pareja->jugador_perros,
 		mesa + 1);
 	pthread_mutex_unlock(&mutex_consola);
-	//juego real ahora >:)
+
 	PartidaKomikan partida_actual;
 	iniciar_juego(&partida_actual);
-	pthread_t hilos_fichas[13];//1 puma + 12 perros
+	pthread_t hilos_fichas[13];
 	int hilos_creados = 0;
-	//crear thread de puma (inicia en 2,2)
+
 	ArgHiloFicha *arg_puma = malloc(sizeof(ArgHiloFicha));
 	arg_puma->partida = &partida_actual;
 	arg_puma->tipo_ficha = PUMA;
 	arg_puma->pos_actual = (Posicion){2, 2};
 	pthread_create(&hilos_fichas[hilos_creados++], NULL, rutina_ficha, arg_puma);
-	//crear threads de 12 perros, 2 primeras filas
+
 	for(int i=0; i<2;i++){
 		for(int j=0; j<5;j++){
 			if(hilos_creados<13){
@@ -152,26 +147,20 @@ static void *ejecutar_juez(void *arg){
 			}
 		}
 	}
-	//juez espera que juego termine o servidor se detenga
-	//imprime log periodicamente
-	while(!partida_actual.juego_end && !servidor_detenido()){
-		pthread_mutex_lock(&mutex_consola);
-		imprimir_tablero(&partida_actual);
-		pthread_mutex_unlock(&mutex_consola);
 
-		dormir_ms(500);//juez toma foto de tablero cada 500ms
+	while(!partida_actual.juego_end && !servidor_detenido()){
+		imprimir_tablero(&partida_actual);
+
+		dormir_ms(500);
 
 		pthread_mutex_lock(&partida_actual.mutex_tablero);
-		//evaluar si el Puma gano por capturas
 		if (partida_actual.perros_capturados >= 6) {
 			pthread_mutex_lock(&mutex_consola);
 			printf("El Puma capturo a 6 perros, el puma gana. \n");
 			pthread_mutex_unlock(&mutex_consola);
 			partida_actual.juego_end = 1;
 		} 
-		//evaluar si los Perros acorralaron al Puma
 		else {
-			//busca donde puma en tablero
 			Posicion pos_puma= {-1, -1};
 			for(int i=0; i<6; i++){
 				for(int j=0; j<5; j++){
@@ -190,25 +179,24 @@ static void *ejecutar_juez(void *arg){
 		}
 		pthread_mutex_unlock(&partida_actual.mutex_tablero);
 	}
-	pthread_mutex_lock(&mutex_consola);
-	imprimir_tablero(&partida_actual);//imprimir tablero final.
-	pthread_mutex_unlock(&mutex_consola);
 
-	//forzar fin si ctrl c
+	imprimir_tablero(&partida_actual);
+
 	pthread_mutex_lock(&partida_actual.mutex_tablero);
 	partida_actual.juego_end = 1; 
 	pthread_mutex_unlock(&partida_actual.mutex_tablero);
-	//esperar que fichas terminen y limpiar
+
 	for(int i=0; i<hilos_creados; i++){
 		pthread_join(hilos_fichas[i], NULL);
 	}
+
 	if(partida_actual.perros_capturados >= 6){
 		pthread_mutex_lock(&mutex_consola);
 		printf("Puma capturo a los 6 perros, puma gana \n");
 		pthread_mutex_unlock(&mutex_consola);
 	}
 	kill_game(&partida_actual);
-	//termina game real
+
 	pthread_mutex_lock(&mutex_consola);
 	if(servidor_detenido()){
 		printf("Partida %d interrumpida \n", pareja->id);
@@ -220,10 +208,9 @@ static void *ejecutar_juez(void *arg){
 	liberar_mesa(mesa);
 	return NULL;
 }
-//Hilo representa q llega jugador
+
 static void *ejecutar_cliente(void *arg){
 	Cliente *cliente= (Cliente *)arg;
-	//sim distintos tipos de llegada
 	dormir_ms(20 + (cliente->id * 37L)%180);
 	if(servidor_detenido()){
 		return NULL;
@@ -242,7 +229,6 @@ static void *ejecutar_cliente(void *arg){
 	pthread_mutex_unlock(&mutex_consola);
 
 	if(posicion%2==0){
-	//primern jugador: es puma
 		pareja->id= indice_pareja + 1;
 		pareja->jugador_puma= cliente->id;
 
@@ -250,7 +236,6 @@ static void *ejecutar_cliente(void *arg){
 		printf("Jugador %d espera pareja \n", cliente->id);
 		pthread_mutex_unlock(&mutex_consola);
 
-		//espera madiente var de condicion
 		while(!pareja->lista && !servidor_detenido()){
 			struct timespec limite;
 			if(tiempo_limite(&limite)==-1){
@@ -267,7 +252,7 @@ static void *ejecutar_cliente(void *arg){
 		pthread_mutex_unlock(&mutex_parejas);
 		return NULL;
 	}
-	//2do jugador, es perros
+
 	pareja->jugador_perros= cliente->id;
 	pareja->lista=1;
 
@@ -281,7 +266,7 @@ static void *ejecutar_cliente(void *arg){
 	pthread_cond_broadcast(&cond_parejas);
 	pthread_mutex_unlock(&mutex_parejas);
 	if(servidor_detenido()) return NULL;
-	//crear juez indep para esta pareja
+
 	int resultado = pthread_create(
 		&cliente->jueces[indice_pareja],
 		NULL,
@@ -298,7 +283,7 @@ static void *ejecutar_cliente(void *arg){
 	cliente->juez_creado[indice_pareja]=1;
 	return NULL;
 }
-//funciuon principal servidor
+
 void iniciar_servidor(int n, int m){
 	sigint_recibida=0;
 	atomic_store(&error_servidor, 0);
@@ -311,7 +296,7 @@ void iniciar_servidor(int n, int m){
 	accion.sa_handler= manejar_sigint;
 	sigemptyset(&accion.sa_mask);
 	if(sigaction(SIGINT, &accion, &anterior)== -1){
-		perror("Error al registrar SIGINT"); //jugador perro perror ajdsfsfgdsgdjgbnsdfg (son las 0:22am)
+		perror("Error al registrar SIGINT");
 		return;
 	}
 	mesas_ocupadas= calloc(m, sizeof(int));
@@ -337,7 +322,6 @@ void iniciar_servidor(int n, int m){
 	pthread_mutex_unlock(&mutex_consola);
 
 	int creados = 0;
-	//crear los N clientes concurrentes
 	for(int i =0; i <n; i++){
 		if(servidor_detenido()) break;
 	
@@ -361,11 +345,11 @@ void iniciar_servidor(int n, int m){
 		}
 		creados++;
 	}
-	//esperar a todos los clientes
+
 	for(int i=0; i<creados;i++){
 		pthread_join(hilos_clientes[i], NULL);
 	}
-	//esperar jueces creados
+
 	for(int i =0; i<cantidad_partidas; i++){
 		if(juez_creado[i]){
 			pthread_join(jueces[i], NULL);
