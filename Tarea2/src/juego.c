@@ -50,7 +50,7 @@ void imprimir_tablero(PartidaKomikan *partida){
 	printf("FINAL DEL TABLERO");
 	pthread_mutex_unlock(&partida->mutex_tablero);//desbloq mutex
 }
-int val_mov(PartidaKomikan *partida, int tipo_fcha, Posicion origen, Posicion destino){
+int val_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posicion destino){
 	//verificar pos de origen y destino están e límite de tablero
 	if(origen.x<0 ||origen.x>=6||origen.y<0||origen.y>=5)return 0;
 	if(destino.x<0||destino.x>=6||destino.y<0||destino.y>=5) return 0;
