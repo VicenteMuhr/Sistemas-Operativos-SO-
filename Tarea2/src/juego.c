@@ -41,42 +41,42 @@ void imprimir_tablero(PartidaKomikan *partida){
 	for(int i=0;i<6;i++){//iterar filas
 		for(int j=0;j<5;j++){//iterar columnas
 			if(partida->tablero[i][j]==VACIO) printf("."); //casillas vacias
-			else if(partida->[i][j]==PUMA)printf("P")//PUMA
-			else if(partida->[i][j]==PERRO)printf("D");//PERRO
+			else if(partida->tablero[i][j]==PUMA)printf("P");//PUMA
+			else if(partida->tablero[i][j]==PERRO)printf("D");//PERRO
 		}
 		printf("\n"); //línea nueva desp de cada fila de tablero
 
 	}
 	printf("FINAL DEL TABLERO");
-	pthread_mutex_unlock(&partido->mutex_tablero);//desbloq mutex
+	pthread_mutex_unlock(&partida->mutex_tablero);//desbloq mutex
 }
 int val_mov(PartidaKomikan *partida, int tipo__fecha, Posicion origen, Posicion destino){
 	//verificar pos de origen y destino están e límite de tablero
 	if(origen.x<0 ||origen.x>=6||origen.y<0||origen.y>=5)return 0;
-	if(destino.x<0||destino.x>=6||destino.y<0||destin.y>=5) return 0;
+	if(destino.x<0||destino.x>=6||destino.y<0||destino.y>=5) return 0;
 	//verificar q casilla de destino vacia
 	if(partida->tablero[destino.x][destino.y] != VACIO) return 0;
 	//verificar mov válido segun reglamento
 	int diff_x = abs(destino.x - origen.x);
 	int diff_y = abs(destino.y - origen.y);
-	mov normal (casilla en cualquier direc.)
+	//mov normal (casilla en cualquier direc.)
 	if(diff_x <=1 && diff_y <=1) return 1;
 	//mov captura (PUMA sobre perro)
 	if(tipo_ficha ==PUMA){
-		if((diff_x==2 && diff_y==0)||(diff_x==0 && diff_y==2)||(diff_x==2 && dif_y==2)){
+		if((diff_x==2 && diff_y==0)||(diff_x==0 && diff_y==2)||(diff_x==2 && diff_y==2)){
 		//^mov diagonal o recto de dos casillas
 		//calc posc intermedia entre origen y destino
-		int medio_x= (origen.x + destino.x)/2
-		int medip_y= (origen.y + destino.y)/2
+		int medio_x= (origen.x + destino.x)/2;
+		int medio_y= (origen.y + destino.y)/2;
 			//verificar si casilla media tiene PERRO
 			if(partida->tablero[medio_x][medio_y] == PERRO) return 2; //mov vál. con captura
 		}
 	}
 	return 0; //mov invalido
 }
-int realizar_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posicion destino{
+int realizar_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posicion destino){
 	pthread_mutex_lock(&partida->mutex_tablero); //bloq mutex acceso a tablero
-	int resultado_validacion = validar_movimiento(partida, tipo_ficha, origen, destino);//val. mov antes de exec
+	int resultado_validacion = val_mov(partida, tipo_ficha, origen, destino);//val. mov antes de exec
 	if(resultado_validacion==0){//si mov invalid, desbloq mutex y devuelve 0
 		pthread_mutex_unlock(&partida->mutex_tablero);
 		return 0;
@@ -96,8 +96,8 @@ int realizar_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posic
 	return resultado_validacion;//result (1 mov normal, 2 de captura)
 }
 
-void* rutina_ficha(void *arg)ñ //rutina para hilos de fichas (puma y perros)
-	ArgHiloFicho *datos = (ArgHiloFicha *)arg;//conertir puntero genérico en puntero tipo ArgHiloFicha
+void* rutina_ficha(void *arg){ //rutina para hilos de fichas (puma y perros)
+	ArgHiloFicha *datos = (ArgHiloFicha *)arg;//conertir puntero genérico en puntero tipo ArgHiloFicha
 	PartidaKomikan *partida=datos->partida;//puntero de partida komikan
 	//semilla para num random usando t actual e ID de hiloo
 	unsigned int seed = time(NULL) ^ (unsigned long)pthread_self();
@@ -122,7 +122,7 @@ void* rutina_ficha(void *arg)ñ //rutina para hilos de fichas (puma y perros)
 			.y = datos->pos_actual.y + dir_y
 		};
 		//intentar realizar mov de ficha en partida
-		int resultado = realizar_movimiento(partida, datos->tipo_ficha, datos->pos_actual, destino);
+		int resultado = realizar_mov(partida, datos->tipo_ficha, datos->pos_actual, destino);
 		if(resultado>0){//si mov existoso
 			//actualizar posicion ficha en datos del hilo
 			datos->pos_actual= destino;
