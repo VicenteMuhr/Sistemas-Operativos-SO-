@@ -79,7 +79,7 @@ static int reservar_mesa(void){
 	int mesa=-1;
 	pthread_mutex_lock(&mutex_mesas);
 	for(int i=0; i< total_mesas; i++){
-		if(!mesas_ocupadas[i]{
+		if(!mesas_ocupadas[i]){
 			mesas_ocupadas[i]=1;
 			mesa= i;
 			break;
@@ -98,7 +98,7 @@ static void liberar_mesa(int mesa){
 //Hilo juez, simula partida for now
 static void *ejecutar_juez(void *arg){
 	Pareja *pareja= (Pareja *)arg;
-	if(esperar_mesa()!=0{
+	if(esperar_mesa()!=0){
 		printf("Partida %d cancelada, espera mesa \n",
 		pareja->id);
 		return NULL;
@@ -174,7 +174,7 @@ static void *ejecutar_cliente(void *arg){
 		return NULL;
 	}
 	//2do jugador, es perros
-	pareja->jugador_perros= cliente->;
+	pareja->jugador_perros= cliente->id;
 	pareja->lista=1;
 	printf("Pareja %d formada: Puma %d vs Perros %d\n",
 		pareja->id,
@@ -187,7 +187,7 @@ static void *ejecutar_cliente(void *arg){
 	int resultado = pthread_create(
 		&cliente->jueces[indice_pareja],
 		NULL,
-		ejecuttar_juez,
+		ejecutar_juez,
 		pareja
 	);
 	if(resultado!=0){
