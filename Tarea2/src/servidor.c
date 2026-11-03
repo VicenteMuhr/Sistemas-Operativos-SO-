@@ -104,7 +104,7 @@ static void *ejecutar_juez(void *arg){
 	Pareja *pareja= (Pareja *)arg;
 	if(esperar_mesa()!=0){
 		pthread_mutex_lock(&mutex_consola);
-		printf("Partida %d cancelada, espera mesa \n",
+		printf("\nPartida %d cancelada, espera mesa \n",
 		pareja->id);
 		pthread_mutex_unlock(&mutex_consola);
 		return NULL;
@@ -123,7 +123,7 @@ static void *ejecutar_juez(void *arg){
 		return NULL;
 	}
 	pthread_mutex_lock(&mutex_consola);
-	printf("Partida %d: Puma %d vs Perros %d "
+	printf("\n Partida %d: Puma %d vs Perros %d "
 		"-> Mesa %d\n",
 		pareja->id,
 		pareja->jugador_puma,
@@ -163,7 +163,7 @@ static void *ejecutar_juez(void *arg){
 		//evaluar si el Puma gano por capturas
 		if (partida_actual.perros_capturados >= 6) {
 			pthread_mutex_lock(&mutex_consola);
-			printf("El Puma capturo a 6 perros, el puma gana. \n");
+			printf("\n El Puma capturo a 6 perros, el puma gana. \n");
 			pthread_mutex_unlock(&mutex_consola);
 			partida_actual.juego_end = 1;
 		} 
@@ -181,7 +181,7 @@ static void *ejecutar_juez(void *arg){
 			}
 			if(pos_puma.x != -1 && puma_acorralado(&partida_actual, pos_puma)){
 				pthread_mutex_lock(&mutex_consola);
-				printf("Los perros acorralaron al puma, perros ganan. \n");
+				printf("\n Los perros acorralaron al puma, perros ganan. \n");
 				pthread_mutex_unlock(&mutex_consola);
 				partida_actual.juego_end = 1;
 			}
@@ -199,16 +199,16 @@ static void *ejecutar_juez(void *arg){
 	}
 	if(partida_actual.perros_capturados >= 6){
 		pthread_mutex_lock(&mutex_consola);
-		printf("Puma capturo a los 6 perros, puma gana \n");
+		printf("\n Puma capturo a los 6 perros, puma gana \n");
 		pthread_mutex_unlock(&mutex_consola);
 	}
 	kill_game(&partida_actual);
 	//termina game real
 	pthread_mutex_lock(&mutex_consola);
 	if(servidor_detenido()){
-		printf("Partida %d interrumpida \n", pareja->id);
+		printf("\n Partida %d interrumpida \n", pareja->id);
 	}else{
-		printf("Partida %d finalizada \n", pareja->id);
+		printf("\n Partida %d finalizada \n", pareja->id);
 	}
 	pthread_mutex_unlock(&mutex_consola);
 	liberar_mesa(mesa);
@@ -232,7 +232,7 @@ static void *ejecutar_cliente(void *arg){
 	Pareja *pareja= &cliente->parejas[indice_pareja];
 
 	pthread_mutex_lock(&mutex_consola);
-	printf("Jugador %d llega al servidor \n", cliente->id);
+	printf("\n Jugador %d llega al servidor \n", cliente->id);
 	pthread_mutex_unlock(&mutex_consola);
 
 	if(posicion%2==0){
@@ -241,7 +241,7 @@ static void *ejecutar_cliente(void *arg){
 		pareja->jugador_puma= cliente->id;
 
 		pthread_mutex_lock(&mutex_consola);
-		printf("Jugador %d espera pareja \n", cliente->id);
+		printf("\n Jugador %d espera pareja \n", cliente->id);
 		pthread_mutex_unlock(&mutex_consola);
 
 		//espera madiente var de condicion
@@ -266,7 +266,7 @@ static void *ejecutar_cliente(void *arg){
 	pareja->lista=1;
 
 	pthread_mutex_lock(&mutex_consola);
-	printf("Pareja %d formada: Puma %d vs Perros %d\n",
+	printf("\n Pareja %d formada: Puma %d vs Perros %d\n",
 		pareja->id,
 		pareja->jugador_puma,
 		pareja->jugador_perros);
@@ -325,9 +325,9 @@ void iniciar_servidor(int n, int m){
 	}
 
 	pthread_mutex_lock(&mutex_consola);
-	printf("Servidor de emparejamiento \n");
-	printf("Jugadores esperados: %d\n", n);
-	printf("Mesas disponibles: %d\n\n", m);
+	printf("\n Servidor de emparejamiento \n");
+	printf("\n Jugadores esperados: %d\n", n);
+	printf("\n Mesas disponibles: %d\n\n", m);
 	pthread_mutex_unlock(&mutex_consola);
 
 	int creados = 0;
@@ -389,6 +389,6 @@ limpiar_memoria:
 	sigaction(SIGINT, &anterior, NULL);
 
 	pthread_mutex_lock(&mutex_consola);
-	printf("Recursos de servidor liberados\n");
+	printf("\n Recursos de servidor liberados\n");
 	pthread_mutex_unlock(&mutex_consola);
 }
