@@ -13,10 +13,10 @@
 
 //control interrumpciones
 static volatile sig_atomic_t sigint_recibida=0;
-static atomic_bool error_servidor = ATOMIC_VAR_INIT(0);
+static atomic_bool error_servidor = 0;
 //control mesas
 static sem_t mesas_disponibles;
-static pthread_mutex_t mutex_mesas = PTHREAD_MUTEX__INITIALIZER;
+static pthread_mutex_t mutex_mesas = PTHREAD_MUTEX_INITIALIZER;
 static int *mesas_ocupadas=NULL;
 static int total_mesas=0;
 //control emparejamiento
