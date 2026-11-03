@@ -103,8 +103,8 @@ void* rutina_ficha(void *arg){ //rutina para hilos de fichas (puma y perros)
 	unsigned int seed = time(NULL) ^ (unsigned long)pthread_self();
 	while(1){//bucle infinito ficha siga intentando moverse hasta fin de juego)
 		//verificar si juego termino antes de intentar mover
-		pthread_mutex_unlock(&partida->mutex_tablero);//bloq mutex para acceder a bandera de juego terminado
-		if(partida->juego_terminado){//si juego termina, terminar bucle
+		pthread_mutex_lock(&partida->mutex_tablero);//bloq mutex para acceder a bandera de juego terminado
+		if(partida->juego_end){//si juego termina, terminar bucle
 			pthread_mutex_unlock(&partida->mutex_tablero);
 			break;
 		}
