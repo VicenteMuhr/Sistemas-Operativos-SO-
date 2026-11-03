@@ -41,7 +41,7 @@ void imprimir_tablero(PartidaKomikan *partida){
 	}
 	pthread_mutex_unlock(&partida->mutex_tablero);//desbloq mutex
 	pthread_mutex_lock(&mutex_consola);
-	printf("\n Estado tablero");
+	printf("\n Estado tablero\n");
 	for(int i=0;i<6;i++){//iterar filas
 		for(int j=0;j<5;j++){//iterar columnas
 			if(copia[i][j]==VACIO) printf("."); //casillas vacias
@@ -51,7 +51,7 @@ void imprimir_tablero(PartidaKomikan *partida){
 		printf("\n"); //línea nueva desp de cada fila de tablero
 
 	}
-	printf("FINAL DEL TABLERO");
+	printf("\nFINAL DEL TABLERO\n");
 	pthread_mutex_unlock(&mutex_consola);
 }
 int val_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posicion destino){
@@ -173,7 +173,7 @@ void* rutina_ficha(void *arg) {
 		if(resultado > 0) {
 			datos->pos_actual = destino;
 			pthread_mutex_lock(&mutex_consola);
-			printf("[%s] se movio a [%d, %d]\n", 
+			printf("\n[%s] se movio a [%d, %d]\n", 
 				(datos->tipo_ficha == PUMA) ? "Puma" : "Perro", 
 				destino.x, destino.y);
 			pthread_mutex_unlock(&mutex_consola);
