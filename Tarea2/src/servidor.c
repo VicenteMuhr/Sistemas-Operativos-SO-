@@ -236,7 +236,7 @@ void iniciar_servidor(int n, int m){
 	//crear los N clientes concurrentes
 	for(int i =0; i <n; i++){
 		if(servidor_detenido()) break;
-	}
+	
 		clientes[i].id = i + 1;
 		clientes[i].parejas = parejas;
 		clientes[i].jueces = jueces;
