@@ -33,8 +33,6 @@ void iniciar_juego(PartidaKomikan *partida){ //niciar juego
 }
 void imprimir_tablero(PartidaKomikan *partida){
 	char copia[6][5];
-
-	// Copiar estado de forma rápida bajo el mutex de la partida
 	pthread_mutex_lock(&partida->mutex_tablero);
 	for(int i=0; i<6; i++){
 		for(int j=0; j<5; j++){
@@ -42,8 +40,6 @@ void imprimir_tablero(PartidaKomikan *partida){
 		}
 	}
 	pthread_mutex_unlock(&partida->mutex_tablero);//desbloq mutex
-
-	// Imprimir copia de tablero usando únicamente mutex_consola
 	pthread_mutex_lock(&mutex_consola);
 	printf("\n Estado tablero");
 	for(int i=0;i<6;i++){//iterar filas
