@@ -4,6 +4,8 @@
 #include <time.h>
 #include "juego.h"
 
+extern pthread_mutex_t mutex_consola;
+
 void iniciar_juego(PartidaKomikan *partida){ //niciar juego
 	//iniciar mutex tablero
 	pthread_mutex_init(&partida->mutex_tablero, NULL);
@@ -31,6 +33,7 @@ void iniciar_juego(PartidaKomikan *partida){ //niciar juego
 }
 void imprimir_tablero(PartidaKomikan *partida){
 	pthread_mutex_lock(&partida->mutex_tablero);
+	pthread_mutex_lock(&mutex_consola);
 	printf("\n Estado tablero");
 	for(int i=0;i<6;i++){//iterar filas
 		for(int j=0;j<5;j++){//iterar columnas
@@ -42,6 +45,7 @@ void imprimir_tablero(PartidaKomikan *partida){
 
 	}
 	printf("FINAL DEL TABLERO");
+	pthread_mutex_unlock(&mutex_consola);
 	pthread_mutex_unlock(&partida->mutex_tablero);//desbloq mutex
 }
 int val_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posicion destino){
@@ -90,93 +94,89 @@ int realizar_mov(PartidaKomikan *partida, int tipo_ficha, Posicion origen, Posic
 		}
 	}
 	if(!partida->juego_end) { //verificar si el mov deja al puma acorralado
-        Posicion pos_puma = {-1, -1};
-        for(int i = 0; i < 6; i++) {
-            for(int j = 0; j < 5; j++) {
-                if(partida->tablero[i][j] == PUMA) {
-                    pos_puma = (Posicion){i, j};
-                    break;
-                }
-            }
-        }
-        if(pos_puma.x != -1 && puma_acorralado(partida, pos_puma)) {
-            printf("\nPerros acorralan al puma\n");
-            partida->juego_end = 1;
-        }
-    }
+		Posicion pos_puma = {-1, -1};
+		for(int i = 0; i < 6; i++) {
+			for(int j = 0; j < 5; j++) {
+				if(partida->tablero[i][j] == PUMA) {
+					pos_puma = (Posicion){i, j};
+					break;
+				}
+			}
+		}
+		if(pos_puma.x != -1 && puma_acorralado(partida, pos_puma)) {
+			pthread_mutex_lock(&mutex_consola);
+			printf("\nPerros acorralan al puma\n");
+			pthread_mutex_unlock(&mutex_consola);
+			partida->juego_end = 1;
+		}
+	}
 	pthread_mutex_unlock(&partida->mutex_tablero);//desbloq desp de mov
 	return resultado_validacion;//result (1 mov normal, 2 de captura)
 }
 int puma_acorralado(PartidaKomikan *partida, Posicion pos_puma) {
-    int dir_x[] = {-1, -1, -1, 0, 0, 1, 1, 1};
-    int dir_y[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+	int dir_x[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+	int dir_y[] = {-1, 0, 1, -1, 1, -1, 0, 1};
 
-    for(int i = 0; i < 8; i++) {
-        //revisar movimiento normal (distancia 1)
-        Posicion dest1 = {pos_puma.x + dir_x[i], pos_puma.y + dir_y[i]};
-        if(val_mov(partida, PUMA, pos_puma, dest1) > 0) {
-            return 0; 
-        }
-        
-        //revisar salto de captura (distancia 2)
-        Posicion dest2 = {pos_puma.x + (dir_x[i] * 2), pos_puma.y + (dir_y[i] * 2)};
-        if(val_mov(partida, PUMA, pos_puma, dest2) > 0) {
-            return 0; 
-        }
-    }
-    return 1; //verdadero, no tiene ningún movimiento ni salto válido
+	for(int i = 0; i < 8; i++) {
+		//revisar movimiento normal (distancia 1)
+		Posicion dest1 = {pos_puma.x + dir_x[i], pos_puma.y + dir_y[i]};
+		if(val_mov(partida, PUMA, pos_puma, dest1) > 0) {
+			return 0; 
+		}
+		
+		//revisar salto de captura (distancia 2)
+		Posicion dest2 = {pos_puma.x + (dir_x[i] * 2), pos_puma.y + (dir_y[i] * 2)};
+		if(val_mov(partida, PUMA, pos_puma, dest2) > 0) {
+			return 0; 
+		}
+	}
+	return 1; //verdadero, no tiene ningún movimiento ni salto válido
 }
 void* rutina_ficha(void *arg) {
-        ArgHiloFicha *datos = (ArgHiloFicha *)arg;
-        PartidaKomikan *partida = datos->partida;
-        unsigned int seed = time(NULL) ^ (unsigned long)pthread_self();
+	ArgHiloFicha *datos = (ArgHiloFicha *)arg;
+	PartidaKomikan *partida = datos->partida;
+	unsigned int seed = time(NULL) ^ (unsigned long)pthread_self();
 
-        while(1) {
-                pthread_mutex_lock(&partida->mutex_tablero);
-                if(partida->juego_end) {
-                        pthread_mutex_unlock(&partida->mutex_tablero);
-                        break;
-                }
-                pthread_mutex_unlock(&partida->mutex_tablero);
+	while(1) {
+		pthread_mutex_lock(&partida->mutex_tablero);
+		if(partida->juego_end) {
+			pthread_mutex_unlock(&partida->mutex_tablero);
+			break;
+		}
+		pthread_mutex_unlock(&partida->mutex_tablero);
 
-                int milisegundos = 50 + (rand_r(&seed) % 251);
-                usleep(milisegundos * 1000);
+		int milisegundos = 50 + (rand_r(&seed) % 251);
+		usleep(milisegundos * 1000);
 
-                int dir_x = (rand_r(&seed) % 3) - 1;
-                int dir_y = (rand_r(&seed) % 3) - 1;
-                if(dir_x == 0 && dir_y == 0) continue;
-                
-                //capacidad del Puma para saltar (distancia 2)
-                int distancia = 1;
-                if (datos->tipo_ficha == PUMA && (rand_r(&seed) % 2 == 0)) {
-                        distancia = 2;
-                }
+		int dir_x = (rand_r(&seed) % 3) - 1;
+		int dir_y = (rand_r(&seed) % 3) - 1;
+		if(dir_x == 0 && dir_y == 0) continue;
+		
+		//capacidad del Puma para saltar (distancia 2)
+		int distancia = 1;
+		if (datos->tipo_ficha == PUMA && (rand_r(&seed) % 2 == 0)) {
+			distancia = 2;
+		}
 
-                Posicion destino = {
-                        .x = datos->pos_actual.x + (dir_x * distancia),
-                        .y = datos->pos_actual.y + (dir_y * distancia)
-                };
+		Posicion destino = {
+			.x = datos->pos_actual.x + (dir_x * distancia),
+			.y = datos->pos_actual.y + (dir_y * distancia)
+		};
 
-                int resultado = realizar_mov(partida, datos->tipo_ficha, datos->pos_actual, destino);
-                if(resultado > 0) {
-                        datos->pos_actual = destino;
-                        pthread_mutex_lock(&partida->mutex_tablero);
-                        printf("[%s] se movio a [%d, %d]\n", 
-                                (datos->tipo_ficha == PUMA) ? "Puma" : "Perro", 
-                                destino.x, destino.y);
-                        pthread_mutex_unlock(&partida->mutex_tablero);
-                }
-        }
-        free(datos);
-        return NULL;
+		int resultado = realizar_mov(partida, datos->tipo_ficha, datos->pos_actual, destino);
+		if(resultado > 0) {
+			datos->pos_actual = destino;
+			pthread_mutex_lock(&mutex_consola);
+			printf("[%s] se movio a [%d, %d]\n", 
+				(datos->tipo_ficha == PUMA) ? "Puma" : "Perro", 
+				destino.x, destino.y);
+			pthread_mutex_unlock(&mutex_consola);
+		}
+	}
+	free(datos);
+	return NULL;
 }
 //func matar juego, liberar recursos
 void kill_game(PartidaKomikan *partida){
 	pthread_mutex_destroy(&partida->mutex_tablero);
 }
-
-
-
-
-
-
